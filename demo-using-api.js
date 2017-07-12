@@ -57,3 +57,18 @@ myReddit.getAllPosts()
 .then(function (result) {console.log(result);})
 .then(function () {return connection.end()});
 */
+
+//Test insert into subreddits
+var test = {
+    name : "test",
+    description: "test description"
+};
+
+myReddit.createSubreddit(test)
+.then(function (result) {
+    console.log(result);
+})
+.then(function() {return connection.end()})
+.catch(error => { console.log(error);
+})
+.then(function() {return connection.end()});

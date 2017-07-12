@@ -39,11 +39,41 @@ class RedditAPI {
             VALUES (?, ?, ?, NOW(), NOW())`,
             [post.userId, post.title, post.url]
         )
-            .then(result => {
-                return result.insertId;
-            });
+        .then(result => {
+            return result.insertId;
+        });
     }
 
+    createSubreddit(subreddit) {
+        return this.conn.query(
+            `
+            INSERT INTO subreddits(name, description, createdAt, updatedAt)
+            VALUES (?, ?, NOW(), NOW())`,
+            [subreddit.name, subreddit.description]
+        )
+        .then(result => {
+            return result.insertId;
+        })
+        .catch(error => {
+            if (error.code === 'ER_DUP_ENTRY') {
+                throw new Error('A subreddit with this name already exists');
+            }
+            else {
+                throw error;
+            }
+        });
+    }
+    
+    createVote(vote) {
+        //Need to complete logic to validate voteDirection value
+        return this.conn.query(
+            `INSERT INTO votes (userId, postId, voteDirection, createdAt, updatedAt)
+            VALUES (?, ?, ?, NOW(), NOW())
+            ON DUPLICATE KEY UPDATE voteDirection=?, updatedAt=NOW()
+            `,[vote.userId, vote.postId, vote.voteDirection]
+            );
+    }
+    
     getAllPosts() {
         /*
         strings delimited with ` are an ES2015 feature called "template strings".
@@ -76,19 +106,13 @@ class RedditAPI {
                         createdAd: post.userCreatedAt,
                         updatedAt: post.userUpdatedAt
                     }
-                }
+                };
             });
         });
     }
-    
-    createVote(vote) {
-        //Need to complete logic to validate voteDirection value
-        return this.conn.query(
-            `INSERT INTO votes (userId, postId, voteDirection, createdAt, updatedAt)
-            VALUES (?, ?, ?, NOW(), NOW())
-            ON DUPLICATE KEY UPDATE voteDirection=?, updatedAt=NOW()
-            `,[vote.userId, vote.postId, vote.voteDirection]
-            );
+
+    getAllSubreddits() {
+        
     }
 }
 
