@@ -19,10 +19,11 @@ var myReddit = new RedditAPI(connection);
 
 // We call this function to create a new user to test our API
 // The function will return the newly created user's ID in the callback
+/*
 myReddit.createUser({
     username: 'Test8',
     password: 'Test8'
-})
+    })
     .then(newUserId => {
         // Now that we have a user ID, we can use it to create a new post
         // Each post should be associated with a user ID
@@ -48,3 +49,11 @@ myReddit.createUser({
         //return false;
     })
     .then(function() {return connection.end()});
+    */
+
+//Return result of getAllPosts()
+/*
+myReddit.getAllPosts()
+.then(function (result) {console.log(result);})
+.then(function () {return connection.end()});
+*/

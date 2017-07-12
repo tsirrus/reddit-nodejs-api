@@ -61,7 +61,24 @@ class RedditAPI {
             JOIN users u ON p.userId = u.id
             ORDER BY p.createdAt DESC
             LIMIT 25`
-        );
+        )
+        // Map the denormalized info into postObject(userObject) as requested
+        .then(result => {
+            return result.map(function(post) {
+                return {
+                    id: post.id,
+                    title: post.title,
+                    url: post.url,
+                    createdAt: post.createdAt,
+                    updatedAt: post.updatedAt,
+                    user: {
+                        id: post.userId,
+                        createdAd: post.userCreatedAt,
+                        updatedAt: post.userUpdatedAt
+                    }
+                }
+            });
+        });
     }
     
     createVote(vote) {
@@ -71,7 +88,7 @@ class RedditAPI {
             VALUES (?, ?, ?, NOW(), NOW())
             ON DUPLICATE KEY UPDATE voteDirection=?, updatedAt=NOW()
             `,[vote.userId, vote.postId, vote.voteDirection]
-            )
+            );
     }
 }
 
