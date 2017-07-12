@@ -48,9 +48,5 @@ CREATE TABLE subreddits (
 
 -- Add subredditsId to posts and foreign key constraint.
 ALTER TABLE posts 
-ADD COLUMN subredditsId INT,
-ADD CONSTRAINT validSubredditsId FOREIGN KEY (subredditsId) REFERENCES subreddits(id) ON DELETE CASCADE;
-
--- Reorder subredditsID
-ALTER TABLE posts
-MODIFY COLUMN subredditsId INT AFTER id;
+ADD COLUMN subredditId INT AFTER id,
+ADD CONSTRAINT validSubredditId FOREIGN KEY (subredditId) REFERENCES subreddits(id) ON DELETE CASCADE;
