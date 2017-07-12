@@ -1,3 +1,4 @@
+'using strict';
 var bcrypt = require('bcrypt-as-promised');
 var HASH_ROUNDS = 10;
 
@@ -35,7 +36,7 @@ class RedditAPI {
         return this.conn.query(
             `
             INSERT INTO posts (userId, title, url, createdAt, updatedAt)
-            VALUES (?, ?, ?, NOW(). NOW())`,
+            VALUES (?, ?, ?, NOW(), NOW())`,
             [post.userId, post.title, post.url]
         )
             .then(result => {
@@ -55,9 +56,10 @@ class RedditAPI {
          */
         return this.conn.query(
             `
-            SELECT id, title, url, userId, createdAt, updatedAt
-            FROM posts
-            ORDER BY createdAt DESC
+            SELECT p.id, p.title, p.url, p.userId, p.createdAt, p.updatedAt, u.username, u.createdAt AS userCreatedAt, u.updatedAt AS userUpdatedAt
+            FROM posts p
+            JOIN users u ON p.userId = u.id
+            ORDER BY p.createdAt DESC
             LIMIT 25`
         );
     }
