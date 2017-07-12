@@ -38,16 +38,21 @@ class RedditAPI {
     }
 
     createPost(post) {
-        return this.conn.query(
-            `
-            INSERT INTO posts (userId, title, url, createdAt, updatedAt)
-            VALUES (?, ?, ?, NOW(), NOW())
-            `,
-            [post.userId, post.title, post.url]
-        )
-        .then(result => {
-            return result.insertId;
-        });
+        if (post.subredditId === undefined) {
+            throw new Error('subredditId is missing');
+        }
+        else {
+            return this.conn.query(
+                `
+                INSERT INTO posts (subredditId, userId, title, url, createdAt, updatedAt)
+                VALUES (?, ?, ?, ?, NOW(), NOW())
+                `,
+                [post.subredditId, post.userId, post.title, post.url]
+            )
+            .then(result => {
+                return result.insertId;
+            });
+        }
     }
 
     createSubreddit(subreddit) {
