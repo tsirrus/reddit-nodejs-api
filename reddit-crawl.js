@@ -1,29 +1,29 @@
+'use strict';
 var request = require('request-promise');
 var mysql = require('promise-mysql');
 var RedditAPI = require('./reddit');
 
 function getSubreddits() {
-    return request(/* fill in the URL, it's always the same */)
+    return request('https://www.reddit.com/.json')
         .then(response => {
             // Parse response as JSON and store in variable called result
-            var response; // continue this line
+            var result = JSON.parse(response); // continue this line
 
             // Use .map to return a list of subreddit names (strings) only
-            return response.data.children.map(/* write a function */)
+            return result.data.children.map(/* write a function */);
         });
 }
 
 function getPostsForSubreddit(subredditName) {
     return request(/* fill in the URL, it will be based on subredditName */)
-        .then(
-            response => {
+        .then(response => {
                 // Parse the response as JSON and store in variable called result
-                var response; // continue this line
+                var result = JSON.parse(response); // continue this line
 
 
-                return response.data.children
+                return result.data.children
                     .filter(/* write a function */) // Use .filter to remove self-posts
-                    .map(/* write a function */) // Use .map to return title/url/user objects only
+                    .map(/* write a function */); // Use .map to return title/url/user objects only
 
             }
         );
@@ -66,7 +66,7 @@ function crawl() {
                 myReddit.createSubreddit({name: subredditName})
                     .then(subredditId => {
                         subId = subredditId;
-                        return getPostsForSubreddit(subredditName)
+                        return getPostsForSubreddit(subredditName);
                     })
                     .then(posts => {
                         posts.forEach(post => {
@@ -81,7 +81,7 @@ function crawl() {
                             })
                             .catch(function(err) {
                                     return users[post.user];
-                                })
+                                });
                             }
 
                             userIdPromise.then(userId => {
