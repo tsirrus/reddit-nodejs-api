@@ -59,15 +59,25 @@ myReddit.getAllPosts()
 */
 
 //Test insert into subreddits
+/*
 var test = {
-    name : "test",
-    description: "test description"
+    name : "blah test",
+    description: "blah test desc"
 };
 
 myReddit.createSubreddit(test)
 .then(function (result) {
     console.log(result);
 })
+.then(function() {return connection.end()})
+.catch(error => { console.log(error);
+})
+.then(function() {return connection.end()});
+*/
+
+//Return all subreddits
+myReddit.getAllSubreddits()
+.then(function (result) {console.log(result);})
 .then(function() {return connection.end()})
 .catch(error => { console.log(error);
 })

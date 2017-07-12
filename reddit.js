@@ -16,7 +16,12 @@ class RedditAPI {
          */
         return bcrypt.hash(user.password, HASH_ROUNDS)
             .then(hashedPassword => {
-                return this.conn.query('INSERT INTO users (username,password, createdAt, updatedAt) VALUES (?, ?, NOW(), NOW())', [user.username, hashedPassword]);
+                return this.conn.query(
+                    `
+                    INSERT INTO users (username,password, createdAt, updatedAt) VALUES (?, ?, NOW(), NOW())
+                    `,
+                    [user.username, hashedPassword]
+                );
             })
             .then(result => {
                 return result.insertId;
@@ -36,7 +41,8 @@ class RedditAPI {
         return this.conn.query(
             `
             INSERT INTO posts (userId, title, url, createdAt, updatedAt)
-            VALUES (?, ?, ?, NOW(), NOW())`,
+            VALUES (?, ?, ?, NOW(), NOW())
+            `,
             [post.userId, post.title, post.url]
         )
         .then(result => {
@@ -48,7 +54,8 @@ class RedditAPI {
         return this.conn.query(
             `
             INSERT INTO subreddits(name, description, createdAt, updatedAt)
-            VALUES (?, ?, NOW(), NOW())`,
+            VALUES (?, ?, NOW(), NOW())
+            `,
             [subreddit.name, subreddit.description]
         )
         .then(result => {
@@ -67,11 +74,13 @@ class RedditAPI {
     createVote(vote) {
         //Need to complete logic to validate voteDirection value
         return this.conn.query(
-            `INSERT INTO votes (userId, postId, voteDirection, createdAt, updatedAt)
+            `
+            INSERT INTO votes (userId, postId, voteDirection, createdAt, updatedAt)
             VALUES (?, ?, ?, NOW(), NOW())
             ON DUPLICATE KEY UPDATE voteDirection=?, updatedAt=NOW()
-            `,[vote.userId, vote.postId, vote.voteDirection]
-            );
+            `,
+            [vote.userId, vote.postId, vote.voteDirection]
+        );
     }
     
     getAllPosts() {
@@ -86,11 +95,20 @@ class RedditAPI {
          */
         return this.conn.query(
             `
-            SELECT p.id, p.title, p.url, p.userId, p.createdAt, p.updatedAt, u.username, u.createdAt AS userCreatedAt, u.updatedAt AS userUpdatedAt
+            SELECT p.id
+            , p.title
+            , p.url
+            , p.userId
+            , p.createdAt
+            , p.updatedAt
+            , u.username
+            , u.createdAt AS userCreatedAt
+            , u.updatedAt AS userUpdatedAt
             FROM posts p
             JOIN users u ON p.userId = u.id
             ORDER BY p.createdAt DESC
-            LIMIT 25`
+            LIMIT 25
+            `
         )
         // Map the denormalized info into postObject(userObject) as requested
         .then(result => {
@@ -103,7 +121,7 @@ class RedditAPI {
                     updatedAt: post.updatedAt,
                     user: {
                         id: post.userId,
-                        createdAd: post.userCreatedAt,
+                        createdAt: post.userCreatedAt,
                         updatedAt: post.userUpdatedAt
                     }
                 };
@@ -112,7 +130,18 @@ class RedditAPI {
     }
 
     getAllSubreddits() {
-        
+        return this.conn.query(
+            `
+            SELECT name
+            FROM subreddits
+            ORDER BY createdAt DESC
+            `
+        )
+        .then(result => {
+            return result.map(function(subreddit){
+                return subreddit.name;
+            });
+        });
     }
 }
 
