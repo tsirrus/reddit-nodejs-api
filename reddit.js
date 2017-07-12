@@ -63,6 +63,16 @@ class RedditAPI {
             LIMIT 25`
         );
     }
+    
+    createVote(vote) {
+        //Need to complete logic to validate voteDirection value
+        return this.conn.query(
+            `INSERT INTO votes (userId, postId, voteDirection, createdAt, updatedAt)
+            VALUES (?, ?, ?, NOW(), NOW())
+            ON DUPLICATE KEY UPDATE voteDirection=?, updatedAt=NOW()
+            `,[vote.userId, vote.postId, vote.voteDirection]
+            )
+    }
 }
 
 module.exports = RedditAPI;
