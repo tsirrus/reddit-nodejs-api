@@ -50,3 +50,7 @@ CREATE TABLE subreddits (
 ALTER TABLE posts 
 ADD COLUMN subredditsId INT,
 ADD CONSTRAINT validSubredditsId FOREIGN KEY (subredditsId) REFERENCES subreddits(id) ON DELETE CASCADE;
+
+-- Reorder subredditsID
+ALTER TABLE posts
+MODIFY COLUMN subredditsId INT AFTER id;
