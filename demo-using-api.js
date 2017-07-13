@@ -117,14 +117,26 @@ myReddit.createVote(vote)
 */
 
 //Testing createComment
+/*
 var comment = {
-    userId: 3,
+    userId: 5,
     postId: 2,
-    text: "This text is a comment"
+    parentId: 2,
+    text: "This text is a reply to a reply"
 };
 myReddit.createComment(comment)
 .then(function (result) {console.log(result);})
 .then(function() {return connection.end()})
 .catch(error => { console.log(error);
 })
+.then(function() {return connection.end()});
+*/
+
+//Testing getCommentsForPost
+
+//var parentIdArray = [2,3];
+myReddit.getCommentsForPost(2,2)
+.then(function (result) {console.log(result);})
+.then(function() {return connection.end()})
+.catch(error => { console.log(error);})
 .then(function() {return connection.end()});

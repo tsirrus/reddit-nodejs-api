@@ -208,7 +208,67 @@ class RedditAPI {
                     description: subreddit.description,
                     createdAt: subreddit.createdAt,
                     updatedAt: subreddit.updatedAt
-                }
+                };
+            });
+        });
+    }
+    
+    getCommentsForPost(postId, levels, parentId) {
+        var queryStr = '';
+        if (parentId === undefined) {
+            queryStr = `
+                SELECT id
+                ,parentId
+                ,userId
+                ,postId
+                ,text
+                ,createdAt
+                ,updatedAt
+                FROM comments
+                WHERE postId = ` + postId + `
+                AND parentId IS NULL
+                ORDER BY createdAt DESC
+                `;
+        }
+        else {
+            queryStr = `
+                SELECT id
+                ,parentId
+                ,userId
+                ,postId
+                ,text
+                ,createdAt
+                ,updatedAt
+                FROM comments
+                WHERE parentId = ` + parentId + `
+                ORDER BY createdAt DESC
+                `;
+        }
+        console.log("QueryStr=" + queryStr);
+
+        return this.conn.query(queryStr)
+        .then(result => {
+            //var parentIdArray = [];
+            console.log("Result=");
+            console.log(result);
+            console.log("End Result");
+            console.log("This=", this);
+            console.log(this.getCommentsForPost(postId, levels-1, result[0].id));
+            return result.map(function (comment) {
+                console.log("CommentId=", comment.id);
+                console.log(comment);
+                console.log("postId=" + postId + " levels=" + levels);
+                console.log("This2=", this);
+                return {
+                    id: comment.id,
+                    parentId: comment.parentId,
+                    userId: comment.userId,
+                    postId: comment.postId,
+                    text: comment.text,
+                    createdAt: comment.createdAt,
+                    updatedAt: comment.updatedAt,
+                    replies: this.getCommentsForPost(postId, levels-1, comment.id)
+                };
             });
         });
     }
