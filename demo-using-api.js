@@ -87,6 +87,7 @@ myReddit.getAllSubreddits()
 
 
 //Testing modification to posts for subreddits
+/*
 myReddit.createPost({
     subredditId: 1,
     title: 'Hello Reddit! This is my first post',
@@ -98,3 +99,19 @@ myReddit.createPost({
 .catch(error => { console.log(error);
 })
 .then(function() {return connection.end()});
+*/
+
+//Testing createVote
+/*
+var vote = {
+    userId: 7,
+    postId: 2,
+    voteDirection: -1
+};
+myReddit.createVote(vote)
+.then(function (result) {console.log(result);})
+.then(function() {return connection.end()})
+.catch(error => { console.log(error);
+})
+.then(function() {return connection.end()});
+*/

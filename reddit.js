@@ -78,14 +78,21 @@ class RedditAPI {
     
     createVote(vote) {
         //Need to complete logic to validate voteDirection value
-        return this.conn.query(
-            `
-            INSERT INTO votes (userId, postId, voteDirection, createdAt, updatedAt)
-            VALUES (?, ?, ?, NOW(), NOW())
-            ON DUPLICATE KEY UPDATE voteDirection=?, updatedAt=NOW()
-            `,
-            [vote.userId, vote.postId, vote.voteDirection]
-        );
+        switch (vote.voteDirection) {
+            case -1:
+            case 0:
+            case 1:
+                return this.conn.query(
+                    `
+                    INSERT INTO votes (userId, postId, voteDirection, createdAt, updatedAt)
+                    VALUES (?, ?, ?, NOW(), NOW())
+                    ON DUPLICATE KEY UPDATE voteDirection=?, updatedAt=NOW()
+                    `,
+                    [vote.userId, vote.postId, vote.voteDirection, vote.voteDirection]
+                );
+            default:
+                throw Error('Vote direction is not a valid value (-1,0,1)');
+        }
     }
     
     getAllPosts() {
@@ -103,13 +110,19 @@ class RedditAPI {
             SELECT p.id
             , p.title
             , p.url
-            , p.userId
             , p.createdAt
             , p.updatedAt
+            , p.subredditId
+            , s.name AS subredditName
+            , s.description AS subredditDescription
+            , s.createdAt AS subredditCreatedAt
+            , s.updatedAt AS subredditUpdatedAt
+            , p.userId
             , u.username
             , u.createdAt AS userCreatedAt
             , u.updatedAt AS userUpdatedAt
             FROM posts p
+            LEFT JOIN subreddits s ON p.subredditId = s.id
             JOIN users u ON p.userId = u.id
             ORDER BY p.createdAt DESC
             LIMIT 25
@@ -124,6 +137,13 @@ class RedditAPI {
                     url: post.url,
                     createdAt: post.createdAt,
                     updatedAt: post.updatedAt,
+                    subreddit: {
+                        id: post.subredditId,
+                        name: post.subredditName,
+                        description: post.subredditDescription,
+                        createdAt: post.subredditCreatedAt,
+                        updatedAt: post.subredditUpdatedAt
+                    },
                     user: {
                         id: post.userId,
                         createdAt: post.userCreatedAt,
@@ -137,14 +157,24 @@ class RedditAPI {
     getAllSubreddits() {
         return this.conn.query(
             `
-            SELECT name
+            SELECT id
+            ,name
+            ,description
+            ,createdAt
+            ,updatedAt
             FROM subreddits
             ORDER BY createdAt DESC
             `
         )
         .then(result => {
             return result.map(function(subreddit){
-                return subreddit.name;
+                return {
+                    id: subreddit.id,
+                    name: subreddit.name,
+                    description: subreddit.description,
+                    createdAt: subreddit.createdAt,
+                    updatedAt: subreddit.updatedAt
+                }
             });
         });
     }
