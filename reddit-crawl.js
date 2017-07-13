@@ -29,7 +29,7 @@ function getPostsForSubreddit(subredditName) {
             return result.data.children
                 .filter(function(child) {
                     //console.log(child.data.is_self); //Test
-                    return child.data.is_self === false;
+                    return child.data.is_self !== true;
                 }) // Use .filter to remove self-posts
                 .map(function(filteredChild) {
                     //console.log("ChildTitle=" + filteredChild.data.title + " User=" + filteredChild.data.author);
@@ -77,41 +77,45 @@ function crawl() {
 
     // Get a list of subreddits
     getSubreddits()
-        .then(subredditNames => {
-            subredditNames.forEach(subredditName => {
-                var subId;
-                myReddit.createSubreddit({name: subredditName})
-                    .then(subredditId => {
-                        subId = subredditId;
-                        return getPostsForSubreddit(subredditName);
+    .then(subredditNames => {
+        subredditNames.forEach(subredditName => {
+            var subId;
+            myReddit.createSubreddit({name: subredditName})
+            .then(subredditId => {
+                subId = subredditId;
+                return getPostsForSubreddit(subredditName);
+            })
+            .then(posts => {
+                posts.forEach(post => {
+                    var userIdPromise;
+                    if (users[post.user]) {
+                        userIdPromise = Promise.resolve(users[post.user]);
+                    }
+                    else {
+                        userIdPromise = myReddit.createUser({
+                            username: post.user,
+                            password: 'abc123'
                     })
-                    .then(posts => {
-                        posts.forEach(post => {
-                            var userIdPromise;
-                            if (users[post.user]) {
-                                userIdPromise = Promise.resolve(users[post.user]);
-                            }
-                            else {
-                                userIdPromise = myReddit.createUser({
-                                    username: post.user,
-                                    password: 'abc123'
-                            })
-                            .catch(function(err) {
-                                    return users[post.user];
-                                });
-                            }
+                    .catch(function(err) {
+                            return users[post.user];
+                        });
+                    }
 
-                            userIdPromise.then(userId => {
-                                users[post.user] = userId;
-                                return myReddit.createPost({
-                                    subredditId: subId,
-                                    userId: userId,
-                                    title: post.title,
-                                    url: post.url
-                                });
-                            });
+                    userIdPromise.then(userId => {
+                        users[post.user] = userId;
+                        return myReddit.createPost({
+                            subredditId: subId,
+                            userId: userId,
+                            title: post.title,
+                            url: post.url
                         });
                     });
+                });
             });
         });
+    })
+    .then(function () {connection.end();});
+    
 }
+
+crawl();
