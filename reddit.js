@@ -121,10 +121,27 @@ class RedditAPI {
             , u.username
             , u.createdAt AS userCreatedAt
             , u.updatedAt AS userUpdatedAt
+            , SUM(v.voteDirection) AS voteScore
             FROM posts p
-            LEFT JOIN subreddits s ON p.subredditId = s.id
             JOIN users u ON p.userId = u.id
-            ORDER BY p.createdAt DESC
+            LEFT JOIN subreddits s ON p.subredditId = s.id
+            LEFT JOIN votes v ON p.id = v.postId
+            GROUP BY 
+            p.id
+            , p.title
+            , p.url
+            , p.createdAt
+            , p.updatedAt
+            , p.subredditId
+            , s.name
+            , s.description
+            , s.createdAt
+            , s.updatedAt
+            , p.userId
+            , u.username
+            , u.createdAt
+            , u.updatedAt
+            ORDER BY SUM(v.voteDirection) DESC
             LIMIT 25
             `
         )
@@ -134,7 +151,8 @@ class RedditAPI {
                 return {
                     id: post.id,
                     title: post.title,
-                    url: post.url,
+                    url: post.url,  
+                    voteScore: post.voteScore,
                     createdAt: post.createdAt,
                     updatedAt: post.updatedAt,
                     subreddit: {

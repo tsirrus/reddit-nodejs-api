@@ -52,11 +52,11 @@ myReddit.createUser({
     */
 
 //Return result of getAllPosts()
-/*
+
 myReddit.getAllPosts()
 .then(function (result) {console.log(result);})
 .then(function () {return connection.end()});
-*/
+
 
 //Test insert into subreddits
 /*
@@ -106,7 +106,7 @@ myReddit.createPost({
 var vote = {
     userId: 7,
     postId: 2,
-    voteDirection: -1
+    voteDirection: 1
 };
 myReddit.createVote(vote)
 .then(function (result) {console.log(result);})
