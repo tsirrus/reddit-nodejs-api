@@ -52,11 +52,11 @@ myReddit.createUser({
     */
 
 //Return result of getAllPosts()
-
+/*
 myReddit.getAllPosts()
 .then(function (result) {console.log(result);})
 .then(function () {return connection.end()});
-
+*/
 
 //Test insert into subreddits
 /*
@@ -115,3 +115,16 @@ myReddit.createVote(vote)
 })
 .then(function() {return connection.end()});
 */
+
+//Testing createComment
+var comment = {
+    userId: 3,
+    postId: 2,
+    text: "This text is a comment"
+};
+myReddit.createComment(comment)
+.then(function (result) {console.log(result);})
+.then(function() {return connection.end()})
+.catch(error => { console.log(error);
+})
+.then(function() {return connection.end()});

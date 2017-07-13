@@ -95,6 +95,22 @@ class RedditAPI {
         }
     }
     
+    createComment(comment) {
+        return this.conn.query(
+            `
+            INSERT INTO comments (parentId, userId, postId, text, createdAt, updatedAt)
+            VALUES (?, ?, ?, ?, NOW(), NOW())
+            `,
+            [comment.parentId, comment.userId, comment.postId, comment.text]
+        )
+        .then(result => {
+            return result.insertId;
+        })
+        .catch(error => {
+            throw new Error("Something went wrong...");
+        });
+    }
+    
     getAllPosts() {
         /*
         strings delimited with ` are an ES2015 feature called "template strings".
