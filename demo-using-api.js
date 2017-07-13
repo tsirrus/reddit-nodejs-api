@@ -119,10 +119,10 @@ myReddit.createVote(vote)
 //Testing createComment
 /*
 var comment = {
-    userId: 5,
-    postId: 2,
-    parentId: 2,
-    text: "This text is a reply to a reply"
+    userId: 3,
+    postId: 3,
+    parentId: 6,
+    text: "Arrr Matey!"
 };
 myReddit.createComment(comment)
 .then(function (result) {console.log(result);})

@@ -213,9 +213,17 @@ class RedditAPI {
         });
     }
     
-    getCommentsForPost(postId, levels, parentId) {
+    getCommentsForPost(postId, levels, parentIdArray, commentObjectArray) {
+        var currentCommentObjectArray;
+        if (commentObjectArray !== undefined) {
+            currentCommentObjectArray = commentObjectArray;
+        }
+        if (levels <= 0) {
+            console.log("Level reached. Stopping");
+            return currentCommentObjectArray;
+        }
         var queryStr = '';
-        if (parentId === undefined) {
+        if (parentIdArray === undefined || parentIdArray === null) {
             queryStr = `
                 SELECT id
                 ,parentId
@@ -231,6 +239,14 @@ class RedditAPI {
                 `;
         }
         else {
+            var parentIdString = '';
+            for (var i in parentIdArray) {
+                if (i > 0) {
+                    parentIdString += ',';
+                }
+                
+                parentIdString += parentIdArray[i];
+            }
             queryStr = `
                 SELECT id
                 ,parentId
@@ -240,36 +256,59 @@ class RedditAPI {
                 ,createdAt
                 ,updatedAt
                 FROM comments
-                WHERE parentId = ` + parentId + `
+                WHERE parentId IN (` + parentIdString + `)
                 ORDER BY createdAt DESC
                 `;
         }
         console.log("QueryStr=" + queryStr);
-
+        console.log("postId=" + postId + " levels=" + levels);
         return this.conn.query(queryStr)
         .then(result => {
             //var parentIdArray = [];
             console.log("Result=");
             console.log(result);
-            console.log("End Result");
-            console.log("This=", this);
-            console.log(this.getCommentsForPost(postId, levels-1, result[0].id));
-            return result.map(function (comment) {
-                console.log("CommentId=", comment.id);
-                console.log(comment);
-                console.log("postId=" + postId + " levels=" + levels);
-                console.log("This2=", this);
-                return {
-                    id: comment.id,
-                    parentId: comment.parentId,
-                    userId: comment.userId,
-                    postId: comment.postId,
-                    text: comment.text,
-                    createdAt: comment.createdAt,
-                    updatedAt: comment.updatedAt,
-                    replies: this.getCommentsForPost(postId, levels-1, comment.id)
-                };
-            });
+            if (result !== undefined) {
+                var self = this; //Do I need this??
+                var resultCommentIdArray = result.map(comment => {return comment.id});
+                console.log("commentIdArray=",resultCommentIdArray);
+                // Build the current level's result array of comments
+                var resultCommentObjectArray = result.map(comment => {
+                    return {
+                        id: comment.id,
+                        parentId: comment.parentId,
+                        userId: comment.userId,
+                        postId: comment.postId,
+                        text: comment.text,
+                        createdAt: comment.createdAt,
+                        updatedAt: comment.updatedAt,
+                        replies: []
+                    };
+                });
+                if (commentObjectArray === undefined) {
+                    currentCommentObjectArray = resultCommentObjectArray;
+                }
+                else {
+                    //There's an existing comment structure
+                    for (var x in currentCommentObjectArray) {
+                        //Loop through each result comment
+                        for (var y in resultCommentObjectArray) {
+                            if (currentCommentObjectArray[x].id === resultCommentObjectArray[y].parentId) {
+                                currentCommentObjectArray[x].replies.push(resultCommentObjectArray[y]);
+                            }
+                        }
+                    }
+                }
+                console.log("commentObjectArray=", resultCommentObjectArray);
+                if (resultCommentIdArray.length > 0 && levels+1 > 0) {
+                    //Need to go check if the current comments retrieved have replies if there's levels left.
+                    return self.getCommentsForPost(postId, levels - 1, resultCommentIdArray, currentCommentObjectArray);
+                } else {
+                    return currentCommentObjectArray;
+                }
+            }
+            else {
+                return currentCommentObjectArray;
+            }
         });
     }
 }
