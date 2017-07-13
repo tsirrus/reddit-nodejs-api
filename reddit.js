@@ -213,13 +213,14 @@ class RedditAPI {
         });
     }
     
+    // Get comments for a specific post
     getCommentsForPost(postId, levels, parentIdArray, commentObjectArray) {
         var currentCommentObjectArray;
         if (commentObjectArray !== undefined) {
             currentCommentObjectArray = commentObjectArray;
         }
         if (levels <= 0) {
-            console.log("Level reached. Stopping");
+            //console.log("Level reached. Stopping"); //Test
             return currentCommentObjectArray;
         }
         var queryStr = '';
@@ -260,17 +261,16 @@ class RedditAPI {
                 ORDER BY createdAt DESC
                 `;
         }
-        console.log("QueryStr=" + queryStr);
-        console.log("postId=" + postId + " levels=" + levels);
+        //console.log("QueryStr=" + queryStr); //Test
+        //console.log("postId=" + postId + " levels=" + levels); //Test
         return this.conn.query(queryStr)
         .then(result => {
-            //var parentIdArray = [];
-            console.log("Result=");
-            console.log(result);
+            //console.log("Result=");
+            //console.log(result);
             if (result !== undefined) {
                 var self = this; //Do I need this??
                 var resultCommentIdArray = result.map(comment => {return comment.id});
-                console.log("commentIdArray=",resultCommentIdArray);
+                //console.log("commentIdArray=",resultCommentIdArray); //Test
                 // Build the current level's result array of comments
                 var resultCommentObjectArray = result.map(comment => {
                     return {
@@ -298,7 +298,7 @@ class RedditAPI {
                         }
                     }
                 }
-                console.log("commentObjectArray=", resultCommentObjectArray);
+                //console.log("commentObjectArray=", resultCommentObjectArray); //Test
                 if (resultCommentIdArray.length > 0 && levels+1 > 0) {
                     //Need to go check if the current comments retrieved have replies if there's levels left.
                     return self.getCommentsForPost(postId, levels - 1, resultCommentIdArray, currentCommentObjectArray);

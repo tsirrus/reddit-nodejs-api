@@ -135,8 +135,9 @@ myReddit.createComment(comment)
 //Testing getCommentsForPost
 
 //var parentIdArray = [2,3];
-myReddit.getCommentsForPost(2,2)
-.then(function (result) {console.log(result);})
+myReddit.getCommentsForPost(2,9)
+//.then(function (result) {console.log(result);})
+.then(function(result) { console.log(JSON.stringify(result, null, " "));})
 .then(function() {return connection.end()})
 .catch(error => { console.log(error);})
 .then(function() {return connection.end()});
