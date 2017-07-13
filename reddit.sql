@@ -50,3 +50,17 @@ CREATE TABLE subreddits (
 ALTER TABLE posts 
 ADD COLUMN subredditId INT AFTER id,
 ADD CONSTRAINT validSubredditId FOREIGN KEY (subredditId) REFERENCES subreddits(id) ON DELETE CASCADE;
+
+-- Add comments table
+CREATE TABLE comments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  parentId INT,
+  userId INT,
+  postId INT,
+  text VARCHAR(10000) NOT NULL,
+  createdAt DATETIME NOT NULL,
+  updatedAt DATETIME NOT NULL,
+  FOREIGN KEY (userId) REFERENCES users (id) ON DELETE SET NULL,
+  FOREIGN KEY (postId) REFERENCES posts (id) ON DELETE SET NULL,
+  FOREIGN KEY (parentId) REFERENCES comments (id)
+);
