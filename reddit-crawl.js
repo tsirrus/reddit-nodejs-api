@@ -10,24 +10,41 @@ function getSubreddits() {
             var result = JSON.parse(response); // continue this line
 
             // Use .map to return a list of subreddit names (strings) only
-            return result.data.children.map(/* write a function */);
+            return result.data.children.map(function (child) {
+                //console.log(child.data.subreddit); //Test
+                return child.data.subreddit;
+            });
         });
 }
 
+//getSubreddits(); //Test
+
 function getPostsForSubreddit(subredditName) {
-    return request(/* fill in the URL, it will be based on subredditName */)
+    return request('https://www.reddit.com/r/' + subredditName + '/.json')
         .then(response => {
-                // Parse the response as JSON and store in variable called result
-                var result = JSON.parse(response); // continue this line
+            // Parse the response as JSON and store in variable called result
+            var result = JSON.parse(response); // continue this line
 
-
-                return result.data.children
-                    .filter(/* write a function */) // Use .filter to remove self-posts
-                    .map(/* write a function */); // Use .map to return title/url/user objects only
-
+            //console.log(result.data.children); //Test
+            return result.data.children
+                .filter(function(child) {
+                    //console.log(child.data.is_self); //Test
+                    return child.data.is_self === false;
+                }) // Use .filter to remove self-posts
+                .map(function(filteredChild) {
+                    //console.log("ChildTitle=" + filteredChild.data.title + " User=" + filteredChild.data.author);
+                    //console.log("URL=" + filteredChild.data.url);
+                    return {
+                      title: filteredChild.data.title,
+                      url: filteredChild.data.url,
+                      user: filteredChild.data.author
+                    };
+                }); // Use .map to return title/url/user objects only
             }
         );
 }
+
+//getPostsForSubreddit('thatHappened'); //Test
 
 function crawl() {
     // create a connection to the DB
