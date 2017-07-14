@@ -215,7 +215,33 @@ class RedditAPI {
     
     // Get comments for a specific post
     getCommentsForPost(postId, levels, parentIdArray, commentObjectArray) {
-        var currentCommentObjectArray;
+        var currentCommentObjectArray = [];
+        
+        function appendCommentReplies(comments, replies) {
+            if (replies.length === 0) {
+                return comments;
+            }
+            else if (comments.length === 0) {
+                return replies;
+            }
+            else {
+                for (var i in comments) {
+                    if (comments[i].replies !== undefined) {
+                        comments[i].replies = appendCommentReplies(comments[i].replies, replies);
+                    }
+                    for (var j in replies) {
+                        if (comments[i].id === replies[j].parentId) {
+                            if (comments[i].replies === undefined) {
+                                comments[i].replies = [];
+                            }
+                            comments[i].replies.push(replies[j]);
+                        }
+                    }
+                }
+                return comments;
+            }
+        }
+        
         if (commentObjectArray !== undefined) {
             currentCommentObjectArray = commentObjectArray;
         }
@@ -280,26 +306,35 @@ class RedditAPI {
                         postId: comment.postId,
                         text: comment.text,
                         createdAt: comment.createdAt,
-                        updatedAt: comment.updatedAt,
-                        replies: []
+                        updatedAt: comment.updatedAt
                     };
                 });
+                //console.log(resultCommentObjectArray); //Test
+                currentCommentObjectArray = appendCommentReplies(currentCommentObjectArray, resultCommentObjectArray);
+                /*
                 if (commentObjectArray === undefined) {
                     currentCommentObjectArray = resultCommentObjectArray;
                 }
                 else {
+                    
+                    /*
                     //There's an existing comment structure
                     for (var x in currentCommentObjectArray) {
                         //Loop through each result comment
                         for (var y in resultCommentObjectArray) {
                             if (currentCommentObjectArray[x].id === resultCommentObjectArray[y].parentId) {
+                                if (currentCommentObjectArray[x].replies === undefined) {
+                                    currentCommentObjectArray[x].replies = [];
+                                }
                                 currentCommentObjectArray[x].replies.push(resultCommentObjectArray[y]);
                             }
                         }
                     }
-                }
+                    
+                    
+                }*/
                 //console.log("commentObjectArray=", resultCommentObjectArray); //Test
-                if (resultCommentIdArray.length > 0 && levels+1 > 0) {
+                if (resultCommentIdArray.length > 0 && levels > 0) {
                     //Need to go check if the current comments retrieved have replies if there's levels left.
                     return self.getCommentsForPost(postId, levels - 1, resultCommentIdArray, currentCommentObjectArray);
                 } else {

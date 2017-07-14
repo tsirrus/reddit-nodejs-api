@@ -119,10 +119,10 @@ myReddit.createVote(vote)
 //Testing createComment
 /*
 var comment = {
-    userId: 3,
-    postId: 3,
-    parentId: 6,
-    text: "Arrr Matey!"
+    userId: 7,
+    postId: 2,
+    parentId: 4,
+    text: "I am a level 3 reply?"
 };
 myReddit.createComment(comment)
 .then(function (result) {console.log(result);})
@@ -132,10 +132,10 @@ myReddit.createComment(comment)
 .then(function() {return connection.end()});
 */
 
+
 //Testing getCommentsForPost
 
-//var parentIdArray = [2,3];
-myReddit.getCommentsForPost(2,9)
+myReddit.getCommentsForPost(2,4)
 //.then(function (result) {console.log(result);})
 .then(function(result) { console.log(JSON.stringify(result, null, " "));})
 .then(function() {return connection.end()})
