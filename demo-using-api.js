@@ -21,8 +21,8 @@ var myReddit = new RedditAPI(connection);
 // The function will return the newly created user's ID in the callback
 /*
 myReddit.createUser({
-    username: 'Test8',
-    password: 'Test8'
+    username: 'Test',
+    password: 'Test'
     })
     .then(newUserId => {
         // Now that we have a user ID, we can use it to create a new post
@@ -49,7 +49,7 @@ myReddit.createUser({
         //return false;
     })
     .then(function() {return connection.end()});
-    */
+*/
 
 //Return result of getAllPosts()
 /*
@@ -90,9 +90,11 @@ myReddit.getAllSubreddits()
 /*
 myReddit.createPost({
     subredditId: 1,
+    redditName: 't3_6n46lk',
     title: 'Hello Reddit! This is my first post',
     url: 'http://www.digg.com',
-    userId: 3
+    permanentLink: "r/thatHappened/comments/6n46lk/14_year_old_history_buff_brilliantly_teaches/",
+    userId: 1
 })
 .then(function (result) {console.log(result);})
 .then(function() {return connection.end()})
@@ -134,10 +136,11 @@ myReddit.createComment(comment)
 
 
 //Testing getCommentsForPost
-
+/*
 myReddit.getCommentsForPost(2,4)
 //.then(function (result) {console.log(result);})
 .then(function(result) { console.log(JSON.stringify(result, null, " "));})
 .then(function() {return connection.end()})
 .catch(error => { console.log(error);})
 .then(function() {return connection.end()});
+*/

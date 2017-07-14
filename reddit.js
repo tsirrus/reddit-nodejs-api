@@ -18,7 +18,7 @@ class RedditAPI {
             .then(hashedPassword => {
                 return this.conn.query(
                     `
-                    INSERT INTO users (username,password, createdAt, updatedAt) VALUES (?, ?, NOW(), NOW())
+                    INSERT INTO users (username, password, createdAt, updatedAt) VALUES (?, ?, NOW(), NOW())
                     `,
                     [user.username, hashedPassword]
                 );
@@ -44,10 +44,10 @@ class RedditAPI {
         else {
             return this.conn.query(
                 `
-                INSERT INTO posts (subredditId, userId, title, url, createdAt, updatedAt)
-                VALUES (?, ?, ?, ?, NOW(), NOW())
+                INSERT INTO posts (redditName, subredditId, userId, title, url, permanentLink, createdAt, updatedAt)
+                VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
                 `,
-                [post.subredditId, post.userId, post.title, post.url]
+                [post.redditName, post.subredditId, post.userId, post.title, post.url, post.permanentLink]
             )
             .then(result => {
                 return result.insertId;
@@ -58,10 +58,10 @@ class RedditAPI {
     createSubreddit(subreddit) {
         return this.conn.query(
             `
-            INSERT INTO subreddits(name, description, createdAt, updatedAt)
-            VALUES (?, ?, NOW(), NOW())
+            INSERT INTO subreddits(redditName, name, description, createdAt, updatedAt)
+            VALUES (?, ?, ?, NOW(), NOW())
             `,
-            [subreddit.name, subreddit.description]
+            [subreddit.redditName, subreddit.name, subreddit.description]
         )
         .then(result => {
             return result.insertId;
@@ -124,11 +124,14 @@ class RedditAPI {
         return this.conn.query(
             `
             SELECT p.id
+            , p.redditName
             , p.title
             , p.url
+            , p.permanentLink
             , p.createdAt
             , p.updatedAt
             , p.subredditId
+            , s.redditName AS subredditRedditName
             , s.name AS subredditName
             , s.description AS subredditDescription
             , s.createdAt AS subredditCreatedAt
@@ -144,11 +147,14 @@ class RedditAPI {
             LEFT JOIN votes v ON p.id = v.postId
             GROUP BY 
             p.id
+            , p.redditName
             , p.title
             , p.url
+            , p.permanentLink
             , p.createdAt
             , p.updatedAt
             , p.subredditId
+            , s.redditName
             , s.name
             , s.description
             , s.createdAt
@@ -166,13 +172,16 @@ class RedditAPI {
             return result.map(function(post) {
                 return {
                     id: post.id,
+                    redditName: post.redditName,
                     title: post.title,
                     url: post.url,  
+                    permanentLink: post.permanentLink,
                     voteScore: post.voteScore,
                     createdAt: post.createdAt,
                     updatedAt: post.updatedAt,
                     subreddit: {
                         id: post.subredditId,
+                        redditName: post.subredditRedditName,
                         name: post.subredditName,
                         description: post.subredditDescription,
                         createdAt: post.subredditCreatedAt,
@@ -180,6 +189,7 @@ class RedditAPI {
                     },
                     user: {
                         id: post.userId,
+                        username: post.username,
                         createdAt: post.userCreatedAt,
                         updatedAt: post.userUpdatedAt
                     }
@@ -192,10 +202,11 @@ class RedditAPI {
         return this.conn.query(
             `
             SELECT id
-            ,name
-            ,description
-            ,createdAt
-            ,updatedAt
+            , redditName
+            , name
+            , description
+            , createdAt
+            , updatedAt
             FROM subreddits
             ORDER BY createdAt DESC
             `
@@ -204,11 +215,36 @@ class RedditAPI {
             return result.map(function(subreddit){
                 return {
                     id: subreddit.id,
+                    redditName: subreddit.redditName,
                     name: subreddit.name,
                     description: subreddit.description,
                     createdAt: subreddit.createdAt,
                     updatedAt: subreddit.updatedAt
                 };
+            });
+        });
+    }
+    
+    
+    getAllUsers(){
+        return this.conn.query(
+            `
+            SELECT id
+            , username
+            , createdAt
+            , updatedAt
+            FROM users
+            ORDER BY createdAt DESC
+            `
+        )
+        .then(result => {
+            return result.map(function(user){
+               return {
+                   id: user.id,
+                   username: user.username,
+                   createdAt: user.createdAt,
+                   updatedAt: user.updatedAt
+               } 
             });
         });
     }
@@ -245,7 +281,7 @@ class RedditAPI {
         if (commentObjectArray !== undefined) {
             currentCommentObjectArray = commentObjectArray;
         }
-        if (levels <= 0) {
+        if (levels <= 0 || levels === undefined) {
             //console.log("Level reached. Stopping"); //Test
             return currentCommentObjectArray;
         }
@@ -253,12 +289,12 @@ class RedditAPI {
         if (parentIdArray === undefined || parentIdArray === null) {
             queryStr = `
                 SELECT id
-                ,parentId
-                ,userId
-                ,postId
-                ,text
-                ,createdAt
-                ,updatedAt
+                , parentId
+                , userId
+                , postId
+                , text
+                , createdAt
+                , updatedAt
                 FROM comments
                 WHERE postId = ` + postId + `
                 AND parentId IS NULL
@@ -276,12 +312,12 @@ class RedditAPI {
             }
             queryStr = `
                 SELECT id
-                ,parentId
-                ,userId
-                ,postId
-                ,text
-                ,createdAt
-                ,updatedAt
+                , parentId
+                , userId
+                , postId
+                , text
+                , createdAt
+                , updatedAt
                 FROM comments
                 WHERE parentId IN (` + parentIdString + `)
                 ORDER BY createdAt DESC
@@ -311,28 +347,7 @@ class RedditAPI {
                 });
                 //console.log(resultCommentObjectArray); //Test
                 currentCommentObjectArray = appendCommentReplies(currentCommentObjectArray, resultCommentObjectArray);
-                /*
-                if (commentObjectArray === undefined) {
-                    currentCommentObjectArray = resultCommentObjectArray;
-                }
-                else {
-                    
-                    /*
-                    //There's an existing comment structure
-                    for (var x in currentCommentObjectArray) {
-                        //Loop through each result comment
-                        for (var y in resultCommentObjectArray) {
-                            if (currentCommentObjectArray[x].id === resultCommentObjectArray[y].parentId) {
-                                if (currentCommentObjectArray[x].replies === undefined) {
-                                    currentCommentObjectArray[x].replies = [];
-                                }
-                                currentCommentObjectArray[x].replies.push(resultCommentObjectArray[y]);
-                            }
-                        }
-                    }
-                    
-                    
-                }*/
+
                 //console.log("commentObjectArray=", resultCommentObjectArray); //Test
                 if (resultCommentIdArray.length > 0 && levels > 0) {
                     //Need to go check if the current comments retrieved have replies if there's levels left.
