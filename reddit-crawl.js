@@ -51,16 +51,23 @@ function getPostsForSubreddit(subredditName) {
 
 //getPostsForSubreddit('thatHappened'); //Test
 
+// Get all the comments for a post
 function getCommentsForPost(postPermanentLink) {
     // =========================================================================
     // Function to flatten and clean reddit comment structure
     // =========================================================================
     function formatComment(redditComment, currentArray = []) {
+        // *** Note on the parameters ***
         //When called from the main code, the currentArray will not be provided
         //currentArray is only used for the recursive loop to aggregate the final result
         
+        // *** Processing logic of the function ***
+        //The comment will format and load all the current comments on a specific level, starting with the comments directly attached to the posts.
+        //If it finds replies to the current comment level, it loads it into an array for the next, recursive, call of formatComment
+        //If it doesn't find any reply to the current comment level, then it means that the comment processing is done
+        
         //Set initial arrays
-        let redditCommentArray = [];
+        let redditCommentArray = []; //Failsafe initial array
         let redditReplyArray = []; //Reply array
         
         // === Foreplay sanity check ===
@@ -70,32 +77,36 @@ function getCommentsForPost(postPermanentLink) {
             return currentArray;
         }
         else if (Object.prototype.toString.call( redditComment ) === '[object Array]') {
-
+            // This is the main entry. I'm not even sure if the if and else are necessary anymore now that the bugs are eliminated.
             //console.log("Entered IF"); //Test
             if (redditComment.length === 0)
             {
+                //failsafe: Empty array (should not happen)? Return the currentArray
                 return currentArray;
             }
+            //Failsafe not needed, the parameter's good.
             redditCommentArray = redditComment;
         }
         else {
             //console.log("Entered ELSE"); //Test
+            //The parameter isn't an array (only a comment object?). Push into array failsafe.
             redditCommentArray.push(redditComment);
         }
         // === End of sanity check ===
         
         //console.log("REDDIT!!!!",redditCommentArray); //Test
-        //Clean the current level of comments
+        
+        //Clean the current level of comments and look if there are any replies
         let formattedComment = redditCommentArray.map(currentReddit => {
             //console.log("Current Reddit MAP", currentReddit); //Test
             var commentItem = {
-                commentRedditId: currentReddit.name,
-                commentParentRedditId: currentReddit.parent_id,
-                postRedditId: currentReddit.link_id,
-                author: currentReddit.author,
-                body: currentReddit.body,
-                depth: currentReddit.depth,
-                subreddit: currentReddit.subreddit
+                commentRedditId: currentReddit.name, // The reddit id of the comment
+                commentParentRedditId: currentReddit.parent_id, // The parent's reddit id. Could be a comment or the post
+                postRedditId: currentReddit.link_id, // reddit id of the post
+                author: currentReddit.author, // Author of the comment
+                body: currentReddit.body, // The comment itself
+                depth: currentReddit.depth, // Info: The current depth of the comment. Shouldn't be needed
+                subreddit: currentReddit.subreddit // Info: The subreddit of the post. Shouldn't be needed
             };
 
             // Check for the current comment if there are any replies
@@ -103,12 +114,13 @@ function getCommentsForPost(postPermanentLink) {
                 //console.log('======================================================'); //Test delimiter
                 //console.log("Comment replies child",currentReddit.replies.data.children); //Test
                 
-                //There are replies. Load the reply array
+                //There are replies to the comment. Load the reply array
                 var repliesChildren = currentReddit.replies.data.children;
                 for (let i in repliesChildren) {
                     redditReplyArray.push(repliesChildren[i].data);
                 }
             }
+            
             // Return the current formatted comment to the map
             return commentItem;
         });
@@ -133,7 +145,6 @@ function getCommentsForPost(postPermanentLink) {
             //There are no replies at a lower level. The comment structure is complete
             return currentArray;
         }
-
     }
     
     // =========================================================================
@@ -166,13 +177,13 @@ function getCommentsForPost(postPermanentLink) {
 
         //Format and flatten reddit comment structure for DB insert
         var formattedArray = formatComment(commentArray);
-        console.log("Formatted Array:",formattedArray); //Test
+        //console.log("Formatted Array:",formattedArray); //Test
         //Return result
         return formattedArray;
     });
 }
 
-getCommentsForPost('r/thatHappened/comments/6ncbvu/drug_addict_returns_stolen_money_after_5_years/'); //Test
+//getCommentsForPost('r/thatHappened/comments/6ncbvu/drug_addict_returns_stolen_money_after_5_years/'); //Test
 
 function crawl() {
     // create a connection to the DB
@@ -250,7 +261,7 @@ function crawl() {
 }
 
 //crawl();
-/*
+
 function crawlForComments() {
     // create a connection to the DB
     var connection = mysql.createPool({
@@ -265,69 +276,23 @@ function crawlForComments() {
     var myReddit = new RedditAPI(connection);
     
     // Plan!!!
-    // 1-Get all info from db (subreddit, posts, users)
-    //just need posts, comments don't care about subreddits, they are associated with a post
+    // 1-Get all posts from database
     
-    // 2-For each subreddit, get all posts from reddit
-    
-    // 3-For all posts:
-    // 3.a-Check if post exists in db. (If not, create it?)
-    // 3.b-Get comments from posts with comments
-    
-    // 4-Parse the comment tree (ie: flatline)
-    // 5-Create missing users?
+    // 2-Fetch comments for each post.
+    // 
+    // 5-Create missing users
     // 6-Create comments
     
-    //Fetch all data we currently have in database
-    return Promise.all([myReddit.getAllSubreddits(),myReddit.getAllPosts(),myReddit.getAllUsers()])
-    .then(dbData => {
-        // dbData[0] = subreddits
-        // dbData[1] = posts
-        // dbData[2] = users
-        console.log(dbData);
-        var newPostArray = [];
-        var newUserArray = [];
-        
-        return dbData[0].map(subreddit => {
-            return getPostsForSubreddit(subreddit.name)
-            .catch(error => {
-            console.log(dbData[0]);
-            })
+    //Fetch all the posts
+    return myReddit.getAllPosts()
+    .then(dbPosts => {
+        return dbPosts.forEach(post => {
+            return getCommentsForPost(post.permanentLink);
         })
-        
-        //Filter out the posts without comments
-        .then(redditPostArray => {
-            return redditPostArray.filter(post => {
-                return post.commentCount > 0;
-            });
-        })
-        
-        //Identify new posts and enrich existing ones
-        .then(redditFilteredPostArray => {
-            for (var j in redditFilteredPostArray) {
-                var flagNewPost = true;
-                for (var i in dbData[1]) {
-                    if (dbData[1][i].title === redditFilteredPostArray[j].title) {
-                        flagNewPost = false;
-                        dbData[1][i].permalink = redditFilteredPostArray[j].permalink;
-                        dbData[1][i].redditId = redditFilteredPostArray[j].redditId;
-                        dbData[1][i].subreddit = redditFilteredPostArray[j].subreddit;
-                    }
-                }
-                if (flagNewPost) {
-                    newPostArray.push(redditFilteredPostArray[j]);
-                }
-            }
-            return redditFilteredPostArray;
-        })
-        //Identify new users
-        .then(redditFilteredPostArray => {
-            console.log(redditFilteredPostArray);
+        .then(commentsForPosts => {
+            console.log(commentsForPosts);
         });
-    })
-    .catch(error => {
-        console.log(error);
     });
 }
-*/
-//crawlForComments();
+
+crawlForComments();
