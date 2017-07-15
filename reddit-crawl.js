@@ -56,12 +56,14 @@ function getCommentsForPost(postPermanentLink) {
     // Function to flatten and clean reddit comment structure
     // =========================================================================
     function formatComment(redditComment, currentArray = []) {
-        console.log('======================================================');
-        console.log('======================================================');
-        console.log('======================================================');
+        //When called from the main code, the currentArray will not be provided
+        //currentArray is only used for the recursive loop to aggregate the final result
+        
+        //Set initial arrays
         let redditCommentArray = [];
         let redditReplyArray = []; //Reply array
         
+        // === Foreplay sanity check ===
         if (redditComment === undefined) {
             // Failsafe
             //console.log("Entered UNDEFINED", currentArray); //Test
@@ -80,35 +82,43 @@ function getCommentsForPost(postPermanentLink) {
             //console.log("Entered ELSE"); //Test
             redditCommentArray.push(redditComment);
         }
+        // === End of sanity check ===
         
         //console.log("REDDIT!!!!",redditCommentArray); //Test
+        //Clean the current level of comments
         let formattedComment = redditCommentArray.map(currentReddit => {
             //console.log("Current Reddit MAP", currentReddit); //Test
             var commentItem = {
                 commentRedditId: currentReddit.name,
                 commentParentRedditId: currentReddit.parent_id,
+                postRedditId: currentReddit.link_id,
                 author: currentReddit.author,
                 body: currentReddit.body,
                 depth: currentReddit.depth,
                 subreddit: currentReddit.subreddit
             };
 
+            // Check for the current comment if there are any replies
             if (currentReddit.replies !== undefined && currentReddit.replies !== '') {
                 //console.log('======================================================'); //Test delimiter
                 //console.log("Comment replies child",currentReddit.replies.data.children); //Test
+                
+                //There are replies. Load the reply array
                 var repliesChildren = currentReddit.replies.data.children;
                 for (let i in repliesChildren) {
                     redditReplyArray.push(repliesChildren[i].data);
                 }
             }
+            // Return the current formatted comment to the map
             return commentItem;
         });
         
-        // Load the current level of comments to the main array
+        // Load the current level of formatted comments to the main array (the currentArray)
         for (let i in formattedComment) {
             currentArray.push(formattedComment[i]);
         }
 
+        //Logging info
         //console.log("Reddit Reply Array Size", redditReplyArray.length);
         //console.log("Current Array SIZE", currentArray.length);
         //console.log('======================================================');
@@ -116,9 +126,11 @@ function getCommentsForPost(postPermanentLink) {
         
         // Exit logic
         if (redditReplyArray.length > 0) {
+            //There is a lower level of replies, need to process that level
             return formatComment(redditReplyArray, currentArray);
         }
         else {
+            //There are no replies at a lower level. The comment structure is complete
             return currentArray;
         }
 
@@ -126,31 +138,36 @@ function getCommentsForPost(postPermanentLink) {
     
     // =========================================================================
     // =========================================================================
-    // The crawling code
+    // The reddit crawling code
     // =========================================================================
     // =========================================================================
     
     return request('https://www.reddit.com/' + postPermanentLink + '/.json')
     .then(response => {
         // Parse the response as JSON and store in variable called result
-        var result = JSON.parse(response); // continue this line
+        var result = JSON.parse(response);
         //console.log(result); //Test
         
         var childArray = result.map(item => {
             return item.data.children;
         });
         
-        // ----- Get information for the comments -----
+        // ----- Get raw information for the comments -----
+        // t3 is the parent post, the comments are in t1
         var childCommentArray = childArray.filter(child => {
             return child[0].kind === 't1';
         });
         //console.log("child array=",childArray); //Test
+        
+        //Get the entire comment structure
         var commentArray = childCommentArray[0].map(filteredChild => {
             return filteredChild.data;
         });
 
+        //Format and flatten reddit comment structure for DB insert
         var formattedArray = formatComment(commentArray);
         console.log("Formatted Array:",formattedArray); //Test
+        //Return result
         return formattedArray;
     });
 }
