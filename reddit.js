@@ -18,7 +18,9 @@ class RedditAPI {
             .then(hashedPassword => {
                 return this.conn.query(
                     `
-                    INSERT INTO users (username, password, createdAt, updatedAt) VALUES (?, ?, NOW(), NOW())
+                    INSERT INTO users (username, password, createdAt, updatedAt)
+                    VALUES (?, ?, NOW(), NOW())
+                    ON DUPLICATE KEY UPDATE updatedAt=NOW()
                     `,
                     [user.username, hashedPassword]
                 );
@@ -27,7 +29,7 @@ class RedditAPI {
                 return result.insertId;
             })
             .catch(error => {
-                // Special error handling for duplicate entry
+                // Deprecated: Special error handling for duplicate entry
                 if (error.code === 'ER_DUP_ENTRY') {
                     throw new Error('A user with this username already exists');
                 }

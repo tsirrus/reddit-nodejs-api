@@ -284,15 +284,26 @@ function crawlForComments() {
     // 6-Create comments
     
     //Fetch all the posts
+    var postMap = {};
+    var userMap = {};
+    
     return myReddit.getAllPosts()
     .then(dbPosts => {
-        return dbPosts.forEach(post => {
-            return getCommentsForPost(post.permanentLink);
-        })
-        .then(commentsForPosts => {
-            console.log(commentsForPosts);
+        //console.log("DB Posts",dbPosts);
+        dbPosts.forEach(post => {
+            console.log("Posts permalink",post.permanentLink);
+
+            getCommentsForPost(post.permanentLink)
+            .then(commentsForPost => {
+                //postMap[post.redditName].dbID = post.id;
+                //postMap[post.redditName] = commentsForPost;
+                //userMap[commentsForPost.author].username = commentsForPost.author;
+                console.log("Comments Size for Post", post.id, post.redditName, commentsForPost.length);
+                //console.log("Users", userMap);
+            });
         });
-    });
+    })
+    .then(function () {connection.end();});
 }
 
 crawlForComments();
