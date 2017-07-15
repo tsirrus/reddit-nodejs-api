@@ -52,6 +52,84 @@ function getPostsForSubreddit(subredditName) {
 //getPostsForSubreddit('thatHappened'); //Test
 
 function getCommentsForPost(postPermanentLink) {
+    // =========================================================================
+    // Function to flatten and clean reddit comment structure
+    // =========================================================================
+    function formatComment(redditComment, currentArray = []) {
+        console.log('======================================================');
+        console.log('======================================================');
+        console.log('======================================================');
+        let redditCommentArray = [];
+        let redditReplyArray = []; //Reply array
+        
+        if (redditComment === undefined) {
+            // Failsafe
+            //console.log("Entered UNDEFINED", currentArray); //Test
+            return currentArray;
+        }
+        else if (Object.prototype.toString.call( redditComment ) === '[object Array]') {
+
+            //console.log("Entered IF"); //Test
+            if (redditComment.length === 0)
+            {
+                return currentArray;
+            }
+            redditCommentArray = redditComment;
+        }
+        else {
+            //console.log("Entered ELSE"); //Test
+            redditCommentArray.push(redditComment);
+        }
+        
+        //console.log("REDDIT!!!!",redditCommentArray); //Test
+        let formattedComment = redditCommentArray.map(currentReddit => {
+            //console.log("Current Reddit MAP", currentReddit); //Test
+            var commentItem = {
+                commentRedditId: currentReddit.name,
+                commentParentRedditId: currentReddit.parent_id,
+                author: currentReddit.author,
+                body: currentReddit.body,
+                depth: currentReddit.depth,
+                subreddit: currentReddit.subreddit
+            };
+
+            if (currentReddit.replies !== undefined && currentReddit.replies !== '') {
+                //console.log('======================================================'); //Test delimiter
+                //console.log("Comment replies child",currentReddit.replies.data.children); //Test
+                var repliesChildren = currentReddit.replies.data.children;
+                for (let i in repliesChildren) {
+                    redditReplyArray.push(repliesChildren[i].data);
+                }
+            }
+            return commentItem;
+        });
+        
+        // Load the current level of comments to the main array
+        for (let i in formattedComment) {
+            currentArray.push(formattedComment[i]);
+        }
+
+        //console.log("Reddit Reply Array Size", redditReplyArray.length);
+        //console.log("Current Array SIZE", currentArray.length);
+        //console.log('======================================================');
+        //console.log("Current Array", currentArray);
+        
+        // Exit logic
+        if (redditReplyArray.length > 0) {
+            return formatComment(redditReplyArray, currentArray);
+        }
+        else {
+            return currentArray;
+        }
+
+    }
+    
+    // =========================================================================
+    // =========================================================================
+    // The crawling code
+    // =========================================================================
+    // =========================================================================
+    
     return request('https://www.reddit.com/' + postPermanentLink + '/.json')
     .then(response => {
         // Parse the response as JSON and store in variable called result
@@ -70,22 +148,14 @@ function getCommentsForPost(postPermanentLink) {
         var commentArray = childCommentArray[0].map(filteredChild => {
             return filteredChild.data;
         });
-        //console.log("comment array=",commentArray); //Test
-        return commentArray.map(comment => {
-            return {
-                postRedditId: comment.parentId,
-                commentRedditId: comment.id,
-                author: comment.author,
-                body: comment.body,
-                depth: comment.depth,
-                replies: comment.replies,
-                subreddit: comment.subreddit
-            };
-        });
+
+        var formattedArray = formatComment(commentArray);
+        console.log("Formatted Array:",formattedArray); //Test
+        return formattedArray;
     });
 }
 
-//getCommentsForPost('r/thatHappened/comments/6n46lk/14_year_old_history_buff_brilliantly_teaches'); //Test
+getCommentsForPost('r/thatHappened/comments/6ncbvu/drug_addict_returns_stolen_money_after_5_years/'); //Test
 
 function crawl() {
     // create a connection to the DB
