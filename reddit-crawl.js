@@ -285,6 +285,8 @@ function crawlForComments() {
     
     //Fetch all the posts
     var postMap = {};
+    var commentMap = {};
+    var commentPromiseMap = {};
     var userMap = {};
     
     return myReddit.getAllPosts()
@@ -292,7 +294,7 @@ function crawlForComments() {
         //console.log("DB Posts",dbPosts);
         dbPosts.forEach(post => {
             console.log("Posts permalink",post.permanentLink);
-
+            userMap[post.user.username] = post.user.id;
             getCommentsForPost(post.permanentLink)
             .then(commentsForPost => {
                 //postMap[post.redditName].dbID = post.id;
@@ -300,6 +302,30 @@ function crawlForComments() {
                 //userMap[commentsForPost.author].username = commentsForPost.author;
                 console.log("Comments Size for Post", post.id, post.redditName, commentsForPost.length);
                 //console.log("Users", userMap);
+                var userPromise;
+                commentsForPost.forEach(comment => {
+                    if (userMap[comment.author]) {
+                        userPromise = Promise.resolve(userMap[comment.author]);
+                    }
+                    else {
+                        userPromise = myReddit.createUser({
+                            username: comment.author,
+                            password: 'abc123'
+                        });
+                    }
+                    
+                    //Map the comment
+                    if (comment.commentParentRedditId === post.redditName) {
+                        commentPromiseMap[comment.commentRedditId] = myReddit.createComment({
+                            
+                        })
+                    }
+                    
+                    //comment.id = userMap[comment.author]; // Need to adapt to promise logic
+                    userPromise.then(userId => {
+                        userMap[comment.author] = userId;
+                    })
+                })
             });
         });
     })
